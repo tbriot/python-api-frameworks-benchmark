@@ -26,8 +26,6 @@ OS is Debian. Contains the minimal packages needed to run python.
 ### python:3.6-alpine
 OS is Alpine Linux. **Size: 79MB**
 
-Flask library and dependencies add 10MB to the image size.
-
 ## Why smaller images are better?
 * faster container startup on ECS Fargate. Fargate is a serverless solution. Images are not cached on the Docker Host. The full image has to be pulled from the Docker repository whenever a task is launched.
 * security consideration: smaller packages = smaller surface of attack.
@@ -46,12 +44,131 @@ Flask Restful: 4k GitHub stars.
 Flask: 43k stars.
 
 ## Library (+ dependencies) size
-Size: **5.5MB**
+Size: **10MB**
 ```
 pip install flask-restful --user --upgrade --upgrade-strategy -t ./libraries
 du -bh ./libraries/ 
 ```
 
+## Building Docker images
+```
+cd flask-restful
+docker build -f alpine.Dockerfile -t flask-restful-api-benchmark:alpine .
+docker build -f slim.Dockerfile -t flask-restful-api-benchmark:slim .
+docker build -f fat.Dockerfile -t flask-restful-api-benchmark:fat .
+```
+
+## Pusing images to Amazon ECR
+```
+# Create Amazon ECR repository
+aws ecr create-repository --repository-name flask-restful-api-benchmark
+
+# Tag Docker images with ECR repository
+docker tag flask-restful-api-benchmark:alpine 535992502053.dkr.ecr.ca-central-1.amazonaws.com/flask-restful-api-benchmark:alpine
+docker tag flask-restful-api-benchmark:slim 535992502053.dkr.ecr.ca-central-1.amazonaws.com/flask-restful-api-benchmark:slim
+docker tag flask-restful-api-benchmark:fat 535992502053.dkr.ecr.ca-central-1.amazonaws.com/flask-restful-api-benchmark:fat
+
+# Get docker login command from AWS
+aws ecr get-login --no-include-email
+
+# Login to ECR
+docker login -u AWS -p <secret> https://535992502053.dkr.ecr.ca-central-1.amazonaws.com
+
+# Push images to ECR
+docker push 535992502053.dkr.ecr.ca-central-1.amazonaws.com/flask-restful-api-benchmark:alpine
+docker push 535992502053.dkr.ecr.ca-central-1.amazonaws.com/flask-restful-api-benchmark:slim
+docker push 535992502053.dkr.ecr.ca-central-1.amazonaws.com/flask-restful-api-benchmark:fat
+```
+
+Note: got the following error when pushing the "fat" image to ECR:  
+> file integrity checksum failed for "usr/lib/python3.5/distutils/command/__pycache__/bdist_msi.cpython-35.pyc"
+
+## Container startup in ECS
+* 5 seconds before the ECS task shows up in the AWS console (PROVISIONING status)
+* 10 seconds for the ECS task to reach PENDING status
+* 10 seconds until RUNNING status
+* HTTP server starts in < 1 second
+Total:  25 seconds to get a running ECS task
+
+## Load testing
+Using **wrk** benchmark tool. See https://github.com/wg/wrk.
+
+```
+# Example: 30 seconds, 4 threads, 5 connections
+wrk --duration 30s --threads 4 --connections 4 --timeout 10 http://35.182.155.194:5000/
+```
+
+Results:
+/hello w/ Flask's built-in server
+0.25 vCPU = 235 Req/Dec = 940 Req/Sec/vCPU
+0.5 vCPU = 460 Req/Sec = 920 Req/Sec/vCPU
+4 vCPU = 1150 Req/Sec = 287 Req/Sec/vCPU
+
+
+
+1 ECS task, 0.25 vCPU, 512MB, HTTP client: 4 threads, 4 connections, 5 minutes
+client: Latency 17.95ms, Req/Sec 56.96, Socket errors: connect 2, read 0, write 0, timeout 0
+server: 30% CPU, Memory 5%
+
+1 ECS task, 0.25 vCPU, 512MB, HTTP client: 4 threads, 4 connections, 30sec
+client: Latency 18.90ms, Req/Sec 55.80, Socket errors: connect 2, read 0, write 0, timeout 0
+server: 30% CPU, Memory 5%
+
+1 ECS task, 0.25 vCPU, 512MB, HTTP client: 4 threads, 8 connections, 30sec
+client: Latency 21.05ms, Req/Sec 138.75, Socket errors: none
+server: 51% CPU, Memory 5%
+
+1 ECS task, 0.25 vCPU, 512MB, HTTP client: 4 threads, 12 connections, 30sec
+client: Latency 23.48ms, Req/Sec 174.56, Socket errors: none
+server: 66% CPU, Memory 5%
+
+1 ECS task, 0.25 vCPU, 512MB, HTTP client: 4 threads, 16 connections, 30sec
+client: Latency 28.99ms, Req/Sec 201.39, Socket errors: connect 1, read 0, write 0, timeout 0
+server: 78% CPU, Memory 5%
+
+1 ECS task, 0.25 vCPU, 512MB, HTTP client: 4 threads, 24 connections, 30sec
+client: Latency 34.71ms, Req/Sec 221.79, Socket errors: connect 6, read 0, write 0, timeout 0
+server: 89% CPU, Memory 5%
+
+1 ECS task, 0.25 vCPU, 512MB, HTTP client: 4 threads, 32 connections, 30sec
+client: Latency 66.68ms, Req/Sec 231.9, Socket errors: connect 8, read 0, write 0, timeout 0
+server: 96% CPU, Memory 5%
+
+1 ECS task, 0.25 vCPU, 512MB, HTTP client: 4 threads, 48 connections, 30sec
+client: Latency 148.47ms, Req/Sec 235.35, Socket errors: none
+server: 93% CPU, Memory 5%
+
+1 ECS task, 0.25 vCPU, 512MB, HTTP client: 4 threads, 96 connections, 30sec
+client: Latency 345.83ms, Req/Sec 235.55, Socket errors: none
+server: 80% CPU, Memory 5%
+
+1 ECS task, 0.5 vCPU, 1GB, HTTP client: 4 threads, 32 connections, 30sec
+client: Latency 28.28ms, Req/Sec 321.38, Socket errors: connect 8, read 0, write 0, timeout 0
+server: 62% CPU, Memory 4%
+
+1 ECS task, 0.5 vCPU, 1GB, HTTP client: 4 threads, 64 connections, 30sec
+client: Latency 72.52ms, Req/Sec 469.28, Socket errors: none
+server: 99% CPU, Memory 4%
+
+1 ECS task, 0.5 vCPU, 1GB, HTTP client: 4 threads, 96 connections, 30sec
+client: Latency 125.36 ms, Req/Sec 469.08, Socket errors: none
+server: 99% CPU, Memory 4%
+
+1 ECS task, 4 vCPU, 8GB, HTTP client: 4 threads, 96 connections, 30sec
+client: Latency 44.19 ms, Req/Sec 660.41, Socket errors: none
+server: 15% CPU, Memory 2%
+
+1 ECS task, 4 vCPU, 8GB, HTTP client: 4 threads, 200 connections, 30sec
+client: Latency 61.91 ms, Req/Sec 975.47, Socket errors: none
+server: 18% CPU, Memory 2%
+
+1 ECS task, 4 vCPU, 8GB, HTTP client: 4 threads, 500 connections, 30sec
+client: Latency 103.60 ms, Req/Sec 1141.77, Socket errors: none
+server: 27% CPU, Memory 2%
+
+1 ECS task, 4 vCPU, 8GB, HTTP client: 4 threads, 1000 connections, 30sec
+client: Latency 160.14 ms, Req/Sec 1157.18, Socket errors: connect 63, read 0, write 0, timeout 13
+server: 22% CPU, Memory 2%
 
 # Falcon
 * Falcon: 6k GitHub stars.
