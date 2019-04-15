@@ -46,8 +46,15 @@ Flask: 43k stars.
 ## Library (+ dependencies) size
 Size: **10MB**
 ```
-pip install flask-restful --user --upgrade --upgrade-strategy -t ./libraries
-du -bh ./libraries/ 
+pip install flask-restful -t ./flask-restful-libraries
+du -bh ./flask-restful-libraries 
+```
+
+## Gunicorn (Python WSGI HTTP server for UNIX)
+Size: **757KB**
+```
+pip install gunicorn -t ./gunicorn-libraries
+du -bh ./gunicorn-libraries
 ```
 
 ## Building Docker images
@@ -88,7 +95,7 @@ Note: got the following error when pushing the "fat" image to ECR:
 * 10 seconds for the ECS task to reach PENDING status
 * 10 seconds until RUNNING status
 * HTTP server starts in < 1 second
-Total:  25 seconds to get a running ECS task
+Total:  25 seconds to get a running ECS task w/ the slim image
 
 ## Load testing
 Using **wrk** benchmark tool. See https://github.com/wg/wrk.
@@ -99,7 +106,7 @@ wrk --duration 30s --threads 4 --connections 4 --timeout 10 http://35.182.155.19
 ```
 
 Results:
-/hello w/ Flask's built-in server
+/hello w/ Flask's built-in server and Slim docker image, NO SSL
 0.25 vCPU = 235 Req/Dec = 940 Req/Sec/vCPU
 0.5 vCPU = 460 Req/Sec = 920 Req/Sec/vCPU
 4 vCPU = 1150 Req/Sec = 287 Req/Sec/vCPU
@@ -169,6 +176,29 @@ server: 27% CPU, Memory 2%
 1 ECS task, 4 vCPU, 8GB, HTTP client: 4 threads, 1000 connections, 30sec
 client: Latency 160.14 ms, Req/Sec 1157.18, Socket errors: connect 63, read 0, write 0, timeout 13
 server: 22% CPU, Memory 2%
+
+
+/hello w/ gunicorn, sync, 4 workers, NO SSL
+
+1 ECS task, 0.25 vCPU, 512MB, HTTP client: 4 threads, 32 connections, 30sec
+client: Latency 19.38ms, Req/Sec 155.84, Socket errors: none
+server: 23% CPU, Memory 14%
+
+1 ECS task, 0.25 vCPU, 512MB, HTTP client: 4 threads, 64 connections, 30sec
+client: Latency 40.64ms, Req/Sec 234.01, Socket errors: none
+server: 71% CPU, Memory 14%
+
+1 ECS task, 0.25 vCPU, 512MB, HTTP client: 4 threads, 96 connections, 30sec
+client: Latency 98.10ms, Req/Sec 242.49, Socket errors: none
+server: 51% CPU, Memory 14%
+
+1 ECS task, 0.25 vCPU, 512MB, HTTP client: 4 threads, 200 connections, 30sec
+client: Latency 176.35ms, Req/Sec 324.35, Socket errors: none
+server: 79% CPU, Memory 14%
+
+1 ECS task, 0.25 vCPU, 512MB, HTTP client: 4 threads, 300 connections, 30sec
+client: Latency 236.89ms, Req/Sec 384.97, Socket errors: none
+server: 98% CPU, Memory 14%
 
 # Falcon
 * Falcon: 6k GitHub stars.

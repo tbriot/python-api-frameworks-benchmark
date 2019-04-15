@@ -14,4 +14,4 @@ ENV FLASK_APP=/usr/src/app/api.py
 
 EXPOSE 5000
 
-ENTRYPOINT ["flask", "run", "--host=0.0.0.0"]
+ENTRYPOINT ["gunicorn", "-w", "4", "--bind", "0.0.0.0:8000", "api:app"]
