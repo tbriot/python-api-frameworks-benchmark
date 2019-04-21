@@ -3,6 +3,10 @@
 * Falcon (todo): https://falconframework.org/
 * ???
 
+# Frameworks popularity
+Flask Restful: 4k GitHub stars.  
+Flask: 43k stars.
+
 # API endpoints
 Implementing two HTTP endpoints.
 * **/hello** (GET)  
@@ -12,19 +16,26 @@ Returns a "hello world" JSON string.
 The API waits for _delay_ milliseconds before returning a JSON string.  
 e.g. /sleep/2000 returns a response after 2 seconds.
 
-# Docker images
-## Official Python Docker images
-See https://hub.docker.com/_/python?tab=description
+# HTTP server
 
-### python:3.6
-"Fat" image. OS is Debian. Contains a large number of common Debian packages. **Size: 924MB**
+Using **Gunicorn** (Python WSGI HTTP server for UNIX). See https://gunicorn.org/.
 
-### python:3.6-slim
-OS is Debian. Contains the minimal packages needed to run python.
+Size: **757KB**
+```
+pip install gunicorn -t ./gunicorn-libraries
+du -bh ./gunicorn-libraries
+```
+
+# Dockerizing the app
+## Base image: official Python Docker images
+See https://hub.docker.com/_/python
+
+Three flavors available:
+
+* **python:3.6**: "Fat" image. OS is Debian. Contains a large number of common Debian packages. **Size: 924MB**
+* **python:3.6-slim**: OS is Debian. Contains the minimal packages needed to run python.
 **Size: 138MB**
-
-### python:3.6-alpine
-OS is Alpine Linux. **Size: 79MB**
+* **python:3.6-alpine**: OS is Alpine Linux. **Size: 79MB**
 
 ## Why smaller images are better?
 * faster container startup on ECS Fargate. Fargate is a serverless solution. Images are not cached on the Docker Host. The full image has to be pulled from the Docker repository whenever a task is launched.
@@ -37,26 +48,6 @@ https://www.reddit.com/r/aws/comments/7ixf1q/ecs_fargate_bluegreen_deployments/
 https://stackoverflow.com/questions/48006598/how-fast-can-ecs-fargate-boot-a-container
 https://datree.io/blog/migrating-to-aws-ecs-fargate-in-production/
 
-
-# Flask RESTful
-## Popularity
-Flask Restful: 4k GitHub stars.  
-Flask: 43k stars.
-
-## Library (+ dependencies) size
-Size: **10MB**
-```
-pip install flask-restful -t ./flask-restful-libraries
-du -bh ./flask-restful-libraries 
-```
-
-## Gunicorn (Python WSGI HTTP server for UNIX)
-Size: **757KB**
-```
-pip install gunicorn -t ./gunicorn-libraries
-du -bh ./gunicorn-libraries
-```
-
 ## Building Docker images
 ```
 cd flask-restful
@@ -65,7 +56,34 @@ docker build -f slim.Dockerfile -t flask-restful-api-benchmark:slim .
 docker build -f fat.Dockerfile -t flask-restful-api-benchmark:fat .
 ```
 
-## Pusing images to Amazon ECR
+## Images size with the API code
+
+### Gunicorn (HTTP server) size
+Size: **757KB**
+```
+pip install gunicorn -t ./gunicorn-libraries
+du -bh ./gunicorn-libraries
+```
+
+### Flask Restful library (+ dependencies) size
+Size: **10MB**
+```
+pip install flask-restful -t ./flask-restful-libraries
+du -bh ./flask-restful-libraries 
+```
+
+### Docker images size
+* **python:3.6**:
+    *  Flask Restful + Gunicorn: 934 MB, 357 MB compressed in ECR
+* **python:3.6-slim**:
+    *  Flask Restful + Gunicorn: 149 MB, 53 MB compressed in ECR
+* **python:3.6-alpine**:
+    *  Flask Restful + Gunicorn: 91 MB, **34 MB compressed in ECR** :)
+
+Note: images size are smaller in ECR since the files are compressed. See https://docs.aws.amazon.com/cli/latest/reference/ecr/describe-images.html.
+
+
+## Pushing images to Amazon ECR
 ```
 # Create Amazon ECR repository
 aws ecr create-repository --repository-name flask-restful-api-benchmark
@@ -87,15 +105,63 @@ docker push 535992502053.dkr.ecr.ca-central-1.amazonaws.com/flask-restful-api-be
 docker push 535992502053.dkr.ecr.ca-central-1.amazonaws.com/flask-restful-api-benchmark:fat
 ```
 
-Note: got the following error when pushing the "fat" image to ECR:  
-> file integrity checksum failed for "usr/lib/python3.5/distutils/command/__pycache__/bdist_msi.cpython-35.pyc"
+# ECS Fargate task startup time
+## Task startup time and Docker image size
+Test:
+* a task definitions is created for each Docker image ("fat", slim and alpine) 
+* images size in ECR (compressed): fat = 358 MB, slim = 53 MB, alpine = 34 MB
+* task CPU = 0.25 vCPU, task memory = 512 MB 
+* an ECS service is created for each task definition
+* 10 tasks per service
+* the startup time of each task can be inferred from the "created at" and "started at" timestamp in the AWS Console or _describe-tasks_ AWS CLI command.
+* computing the average startup time of the 10 tasks
 
-## Container startup in ECS
-* 5 seconds before the ECS task shows up in the AWS console (PROVISIONING status)
-* 10 seconds for the ECS task to reach PENDING status
-* 10 seconds until RUNNING status
-* HTTP server starts in < 1 second
-Total:  25 seconds to get a running ECS task w/ the slim image
+Results:
+* alpine image: task avg startup time = **19.8 sec**
+* slim image: task avg startup time = **19.2 sec**
+* **fat image**: task avg startup time = **34.6 sec**
+
+Conclusion:
+* **Docker image size does matter** when it comes to the ECS Fargate launch type
+* Tasks with the fat image takes **75% more time** to start than the slim or alpine ones
+
+## Task startup time and CPU
+Do tasks start faster with more CPU ?
+
+Test:
+* Using the "fat" Python Docker image
+* 4 vCPU instead of 0.25 vCPU
+* same protocol as above (10 tasks are launched)
+
+Results:
+* fat image: task avg startup time = **32.3 sec** (5% faster)
+
+Conclusion:
+* Increasing vCPU does **not** speed up task startup time significantly
+* hypothesis: the small improvement, if any, may come from the decompression of the image on the Docker host. Does not seem to be worth the extra vCPU though
+
+## Task startup time and VPC Endpoints
+Do tasks start faster if they use VPC Endpoints to pull image from ECR ?
+
+Test:
+* Using the "fat" Python Docker image
+* VPC Endpoints have been created in the VPC to reach ECR (and S3)
+* 4 vCPU
+* same protocol as above (10 tasks are launched)
+
+Results:
+* fat image: task avg startup time = 33.2 sec (3% slower)
+
+Conclusion:
+* VPC Endpoints do **not** speed up task startup time
+* those endpoints can be useful if your tasks are running in a private subnet and you don't want to overload your NAT Gateway with large docker images downloads. But it won't improve your tasks startup time.
+
+# Task memory utilization
+Without any load:
+* slim and alpine based docker image: 14.5% of 512 MB
+* fat image: 14.6% of 512 MB
+
+Conclusion: **75 MB of memory consumed when id**
 
 ## Load testing
 Using **wrk** benchmark tool. See https://github.com/wg/wrk.
