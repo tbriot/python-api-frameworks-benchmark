@@ -161,7 +161,7 @@ Without any load:
 * slim and alpine based docker image: 14.5% of 512 MB
 * fat image: 14.6% of 512 MB
 
-Conclusion: **75 MB of memory consumed when id**
+Conclusion: **75 MB of memory consumed when idle**
 
 ## Load testing
 Using **wrk** benchmark tool. See https://github.com/wg/wrk.
