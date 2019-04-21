@@ -80,7 +80,7 @@ du -bh ./flask-restful-libraries
 * **python:3.6-alpine**:
     *  Flask Restful + Gunicorn: 91 MB, **34 MB compressed in ECR** :)
 
-Note: images size are smaller in ECR since the files are compressed. See https://docs.aws.amazon.com/cli/latest/reference/ecr/describe-images.html.
+Note: images size are smaller in ECR since docker clients compress image layers before pushing them to Docker registries. This is not specific to ECR. See https://docs.aws.amazon.com/cli/latest/reference/ecr/describe-images.html.
 
 
 ## Pushing images to Amazon ECR
