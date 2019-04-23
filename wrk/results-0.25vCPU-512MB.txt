@@ -1,0 +1,101 @@
+From home desktop
+0.25 vCPU
+512
+Gunicorn, 4 workers sync
+
+
+Running load test on http://99.79.64.202:8000/ endpoint
+Duration set to 10s
+Pause between tests set to 5s
+------------------------------------------------------------
+Running 10s test @ http://99.79.64.202:8000/
+  1 threads and 2 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    17.46ms    3.37ms  34.94ms   73.65%
+    Req/Sec    55.40     11.93    80.00     67.00%
+  554 requests in 10.01s, 93.60KB read
+Requests/sec:     55.37
+Transfer/sec:      9.35KB
+------------------------------------------------------------
+Running 10s test @ http://99.79.64.202:8000/
+  1 threads and 4 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    17.58ms    3.48ms  37.94ms   75.60%
+    Req/Sec    74.68     23.20   140.00     65.00%
+  746 requests in 10.01s, 126.03KB read
+Requests/sec:     74.55
+Transfer/sec:     12.59KB
+------------------------------------------------------------
+Running 10s test @ http://99.79.64.202:8000/
+  1 threads and 8 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    19.45ms   18.77ms 244.07ms   98.56%
+    Req/Sec   103.83     30.61   191.00     68.00%
+  1036 requests in 10.01s, 175.03KB read
+Requests/sec:    103.53
+Transfer/sec:     17.49KB
+------------------------------------------------------------
+Running 10s test @ http://99.79.64.202:8000/
+  1 threads and 16 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    20.37ms   22.14ms 262.69ms   98.55%
+    Req/Sec   137.17     41.13   272.00     66.00%
+  1368 requests in 10.00s, 231.12KB read
+Requests/sec:    136.73
+Transfer/sec:     23.10KB
+------------------------------------------------------------
+Running 10s test @ http://99.79.64.202:8000/
+  1 threads and 32 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    21.44ms   28.55ms 456.48ms   98.34%
+    Req/Sec   145.44     54.24   350.00     68.69%
+  1443 requests in 10.00s, 243.79KB read
+  Socket errors: connect 10, read 0, write 0, timeout 0
+Requests/sec:    144.24
+Transfer/sec:     24.37KB
+------------------------------------------------------------
+Running 10s test @ http://99.79.64.202:8000/
+  1 threads and 64 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    56.24ms   75.88ms 476.65ms   84.70%
+    Req/Sec   229.79    107.08   610.00     70.21%
+  2235 requests in 10.01s, 377.59KB read
+Requests/sec:    223.27
+Transfer/sec:     37.72KB
+------------------------------------------------------------
+Running 10s test @ http://99.79.64.202:8000/
+  1 threads and 128 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   148.12ms  103.30ms 667.73ms   68.38%
+    Req/Sec   254.22    190.18     0.86k    70.37%
+  2445 requests in 10.01s, 413.07KB read
+Requests/sec:    244.23
+Transfer/sec:     41.26KB
+------------------------------------------------------------
+Running 10s test @ http://99.79.64.202:8000/
+  1 threads and 256 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   236.19ms  116.73ms 946.55ms   80.04%
+    Req/Sec   356.74    102.86   580.00     79.17%
+  3462 requests in 10.02s, 584.89KB read
+Requests/sec:    345.38
+Transfer/sec:     58.35KB
+------------------------------------------------------------
+Running 10s test @ http://99.79.64.202:8000/
+  1 threads and 512 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   406.82ms  241.58ms   3.77s    88.82%
+    Req/Sec   368.95     84.18   545.00     89.13%
+  3505 requests in 10.07s, 592.15KB read
+Requests/sec:    348.14
+Transfer/sec:     58.82KB
+------------------------------------------------------------
+Running 10s test @ http://99.79.64.202:8000/
+  1 threads and 1024 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   600.13ms  540.36ms   7.90s    91.70%
+    Req/Sec   322.59    166.24   717.00     71.60%
+  2820 requests in 10.09s, 476.43KB read
+  Socket errors: connect 107, read 0, write 0, timeout 0
+Requests/sec:    279.38
+Transfer/sec:     47.20KB

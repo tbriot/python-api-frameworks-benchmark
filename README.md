@@ -163,6 +163,49 @@ Without any load:
 
 Conclusion: **75 MB of memory consumed when idle**
 
+
+
+## Latency
+See reddit thread: https://www.reddit.com/r/aws/comments/bg448q/ecs_fargate_latency_issue/
+
+
+AWS Deep dive on Container Networking : https://www.youtube.com/watch?v=1upInHReIxI&list=WL&index=67&t=1770s
+
+1 thread 1 connection
+```
+wrk --duration 10s --threads 1 --connections 1 --timeout 10 http://10.0.1.78:8000
+```
+
+t2.micro ec2 instance to t2.micro ec2 instance in the same subnet (public subnet):
+* with private IP: 1.20ms
+* with public IP: 1ms (slightly faster)
+
+Same test with apache http server, serving static html file: 0.45ms
+
+home desktop to t2.micro ec2 instance in public subnet: 17.5ms
+
+t2.micro ec2 instance to ecs fargate task in the same subnet (public subnet):
+* with private IP: 14ms !!! :(
+* with public IP: 13ms (slightly faster)
+
+home desktop to ecs fargate task (public subnet): 17ms
+
+t2.micro ec2 instance to ecs task  (ec2 launch type, t2.micro) in the same subnet (public subnet):
+* with private IP: 1ms
+* with public IP: 1ms
+
+home desktop to ecs task (ec2 launch type, t2.micro) (public subnet): 17ms
+
+Conclusion: something is wrong with ECS Fargate 'awsvpc' Network Mode. Adds 12ms latency to calls originating from the same subnet.
+
+Boosting ECS Fargate task to 1vCPU and 2GB : latency = 0.9ms !!
+v2: 0.25vCPU / 512MB : 14ms
+v4: 0.25vCPU / 1GB: 9ms
+v5: 0.25vCPU / 2GB: 9ms
+v6: 0.5vCPU / 1GB: 1ms
+v3: 1vCPU / 2GB : 0.9ms
+v7: 4vCPU / 8GB : 0.9ms
+
 ## Load testing
 Using **wrk** benchmark tool. See https://github.com/wg/wrk.
 
@@ -171,100 +214,8 @@ Using **wrk** benchmark tool. See https://github.com/wg/wrk.
 wrk --duration 30s --threads 4 --connections 4 --timeout 10 http://35.182.155.194:5000/
 ```
 
-Results:
-/hello w/ Flask's built-in server and Slim docker image, NO SSL
-0.25 vCPU = 235 Req/Dec = 940 Req/Sec/vCPU
-0.5 vCPU = 460 Req/Sec = 920 Req/Sec/vCPU
-4 vCPU = 1150 Req/Sec = 287 Req/Sec/vCPU
+Results: around 1000 req/sec per vCPU provisioned.
 
-
-
-1 ECS task, 0.25 vCPU, 512MB, HTTP client: 4 threads, 4 connections, 5 minutes
-client: Latency 17.95ms, Req/Sec 56.96, Socket errors: connect 2, read 0, write 0, timeout 0
-server: 30% CPU, Memory 5%
-
-1 ECS task, 0.25 vCPU, 512MB, HTTP client: 4 threads, 4 connections, 30sec
-client: Latency 18.90ms, Req/Sec 55.80, Socket errors: connect 2, read 0, write 0, timeout 0
-server: 30% CPU, Memory 5%
-
-1 ECS task, 0.25 vCPU, 512MB, HTTP client: 4 threads, 8 connections, 30sec
-client: Latency 21.05ms, Req/Sec 138.75, Socket errors: none
-server: 51% CPU, Memory 5%
-
-1 ECS task, 0.25 vCPU, 512MB, HTTP client: 4 threads, 12 connections, 30sec
-client: Latency 23.48ms, Req/Sec 174.56, Socket errors: none
-server: 66% CPU, Memory 5%
-
-1 ECS task, 0.25 vCPU, 512MB, HTTP client: 4 threads, 16 connections, 30sec
-client: Latency 28.99ms, Req/Sec 201.39, Socket errors: connect 1, read 0, write 0, timeout 0
-server: 78% CPU, Memory 5%
-
-1 ECS task, 0.25 vCPU, 512MB, HTTP client: 4 threads, 24 connections, 30sec
-client: Latency 34.71ms, Req/Sec 221.79, Socket errors: connect 6, read 0, write 0, timeout 0
-server: 89% CPU, Memory 5%
-
-1 ECS task, 0.25 vCPU, 512MB, HTTP client: 4 threads, 32 connections, 30sec
-client: Latency 66.68ms, Req/Sec 231.9, Socket errors: connect 8, read 0, write 0, timeout 0
-server: 96% CPU, Memory 5%
-
-1 ECS task, 0.25 vCPU, 512MB, HTTP client: 4 threads, 48 connections, 30sec
-client: Latency 148.47ms, Req/Sec 235.35, Socket errors: none
-server: 93% CPU, Memory 5%
-
-1 ECS task, 0.25 vCPU, 512MB, HTTP client: 4 threads, 96 connections, 30sec
-client: Latency 345.83ms, Req/Sec 235.55, Socket errors: none
-server: 80% CPU, Memory 5%
-
-1 ECS task, 0.5 vCPU, 1GB, HTTP client: 4 threads, 32 connections, 30sec
-client: Latency 28.28ms, Req/Sec 321.38, Socket errors: connect 8, read 0, write 0, timeout 0
-server: 62% CPU, Memory 4%
-
-1 ECS task, 0.5 vCPU, 1GB, HTTP client: 4 threads, 64 connections, 30sec
-client: Latency 72.52ms, Req/Sec 469.28, Socket errors: none
-server: 99% CPU, Memory 4%
-
-1 ECS task, 0.5 vCPU, 1GB, HTTP client: 4 threads, 96 connections, 30sec
-client: Latency 125.36 ms, Req/Sec 469.08, Socket errors: none
-server: 99% CPU, Memory 4%
-
-1 ECS task, 4 vCPU, 8GB, HTTP client: 4 threads, 96 connections, 30sec
-client: Latency 44.19 ms, Req/Sec 660.41, Socket errors: none
-server: 15% CPU, Memory 2%
-
-1 ECS task, 4 vCPU, 8GB, HTTP client: 4 threads, 200 connections, 30sec
-client: Latency 61.91 ms, Req/Sec 975.47, Socket errors: none
-server: 18% CPU, Memory 2%
-
-1 ECS task, 4 vCPU, 8GB, HTTP client: 4 threads, 500 connections, 30sec
-client: Latency 103.60 ms, Req/Sec 1141.77, Socket errors: none
-server: 27% CPU, Memory 2%
-
-1 ECS task, 4 vCPU, 8GB, HTTP client: 4 threads, 1000 connections, 30sec
-client: Latency 160.14 ms, Req/Sec 1157.18, Socket errors: connect 63, read 0, write 0, timeout 13
-server: 22% CPU, Memory 2%
-
-
-/hello w/ gunicorn, sync, 4 workers, NO SSL
-
-1 ECS task, 0.25 vCPU, 512MB, HTTP client: 4 threads, 32 connections, 30sec
-client: Latency 19.38ms, Req/Sec 155.84, Socket errors: none
-server: 23% CPU, Memory 14%
-
-1 ECS task, 0.25 vCPU, 512MB, HTTP client: 4 threads, 64 connections, 30sec
-client: Latency 40.64ms, Req/Sec 234.01, Socket errors: none
-server: 71% CPU, Memory 14%
-
-1 ECS task, 0.25 vCPU, 512MB, HTTP client: 4 threads, 96 connections, 30sec
-client: Latency 98.10ms, Req/Sec 242.49, Socket errors: none
-server: 51% CPU, Memory 14%
-
-1 ECS task, 0.25 vCPU, 512MB, HTTP client: 4 threads, 200 connections, 30sec
-client: Latency 176.35ms, Req/Sec 324.35, Socket errors: none
-server: 79% CPU, Memory 14%
-
-1 ECS task, 0.25 vCPU, 512MB, HTTP client: 4 threads, 300 connections, 30sec
-client: Latency 236.89ms, Req/Sec 384.97, Socket errors: none
-server: 98% CPU, Memory 14%
 
 # Falcon
 * Falcon: 6k GitHub stars.

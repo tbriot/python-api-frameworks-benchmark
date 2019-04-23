@@ -1,0 +1,99 @@
+from ec2 instance t2.micro in the same VPC
+4 vCPU
+8 GB
+Gunicorn, 4 workers sync
+
+Running load test on http://10.0.1.183:8000/ endpoint
+Duration set to 10
+Pause between tests set to 3
+------------------------------------------------------------
+Running 10s test @ http://10.0.1.183:8000/
+  2 threads and 2 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   797.46us  691.74us  24.84ms   99.40%
+    Req/Sec   849.31     60.03     1.01k    76.24%
+  17084 requests in 10.10s, 2.82MB read
+Requests/sec:   1691.42
+Transfer/sec:    285.76KB
+------------------------------------------------------------
+Running 10s test @ http://10.0.1.183:8000/
+  2 threads and 4 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency     1.06ms  340.18us  14.65ms   96.10%
+    Req/Sec     1.19k    84.83     1.45k    68.81%
+  23861 requests in 10.10s, 3.94MB read
+Requests/sec:   2362.53
+Transfer/sec:    399.15KB
+------------------------------------------------------------
+Running 10s test @ http://10.0.1.183:8000/
+  2 threads and 8 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency     1.61ms  754.98us  23.85ms   96.31%
+    Req/Sec     1.51k   169.13     2.00k    66.50%
+  29980 requests in 10.00s, 4.95MB read
+Requests/sec:   2997.44
+Transfer/sec:    506.40KB
+------------------------------------------------------------
+Running 10s test @ http://10.0.1.183:8000/
+  2 threads and 16 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency     2.68ms    0.95ms  30.64ms   96.66%
+    Req/Sec     1.72k   195.12     2.05k    69.00%
+  34185 requests in 10.01s, 5.64MB read
+Requests/sec:   3416.12
+Transfer/sec:    577.15KB
+------------------------------------------------------------
+Running 10s test @ http://10.0.1.183:8000/
+  2 threads and 32 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency     5.52ms    1.12ms  20.46ms   71.15%
+    Req/Sec     1.59k   150.49     2.06k    77.50%
+  31579 requests in 10.01s, 5.21MB read
+Requests/sec:   3155.68
+Transfer/sec:    533.14KB
+------------------------------------------------------------
+Running 10s test @ http://10.0.1.183:8000/
+  2 threads and 64 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency     8.95ms    1.42ms  17.73ms   74.34%
+    Req/Sec     1.79k   220.87     2.14k    70.00%
+  35699 requests in 10.01s, 5.89MB read
+Requests/sec:   3567.24
+Transfer/sec:    602.67KB
+------------------------------------------------------------
+Running 10s test @ http://10.0.1.183:8000/
+  2 threads and 128 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    19.68ms    2.96ms  37.83ms   72.08%
+    Req/Sec     1.65k   215.47     2.07k    66.50%
+  32949 requests in 10.00s, 5.44MB read
+Requests/sec:   3293.43
+Transfer/sec:    556.45KB
+------------------------------------------------------------
+Running 10s test @ http://10.0.1.183:8000/
+  2 threads and 256 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    28.05ms    9.41ms 250.45ms   99.47%
+    Req/Sec     2.38k   130.31     2.78k    70.50%
+  47337 requests in 10.00s, 7.81MB read
+Requests/sec:   4731.59
+Transfer/sec:    799.39KB
+------------------------------------------------------------
+Running 10s test @ http://10.0.1.183:8000/
+  2 threads and 512 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    72.26ms   99.61ms   1.01s    88.45%
+    Req/Sec     2.16k   785.36     3.85k    75.27%
+  40187 requests in 10.01s, 6.63MB read
+Requests/sec:   4014.03
+Transfer/sec:    678.15KB
+------------------------------------------------------------
+Running 10s test @ http://10.0.1.183:8000/
+  2 threads and 1024 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   661.98ms    1.45s    7.69s    88.40%
+    Req/Sec     1.46k   820.79     3.19k    62.69%
+  20384 requests in 10.03s, 3.36MB read
+  Socket errors: connect 5, read 0, write 0, timeout 0
+Requests/sec:   2032.81
+Transfer/sec:    343.43KB
