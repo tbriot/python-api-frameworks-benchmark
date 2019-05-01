@@ -1,3 +1,5 @@
+import gevent
+
 from flask import Flask
 from flask_restful import Resource, Api
 
@@ -13,7 +15,7 @@ class HelloWorld(Resource):
 
 class Sleep(Resource):
     def get(self, delay): # delay in milliseconds
-        sleep(delay / 1000)
+        gevent.sleep(delay / 1000)
         return {'message': f"Slept for {delay} milliseconds"}
 
 api.add_resource(HelloWorld, '/hello', '/')
