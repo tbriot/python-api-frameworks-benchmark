@@ -213,7 +213,7 @@ We suspect that the time.sleep() method call might be blocking for those framewo
 
 
 ### Results
-ask + Gunicorn + gevent workers combo is able to process around **1300 req/sec per vCPU** provisioned.  
+Flask + Gunicorn + gevent workers combo is able to process around **1300 req/sec per vCPU** provisioned.  
 At this rate the framework overhead is < 1ms.  
 The CPU is the limiting factor. Memory utilization is pretty low < 100MB.  
 If the number of connections is pushed beyond this limit then 100% CPU is consumed, and latency increases significantly.
