@@ -213,23 +213,21 @@ We suspect that the time.sleep() method call might be blocking for those framewo
 
 
 ### Results
-Flask is able to process around **1300 req/sec per vCPU** provisioned.  
-At this rate the latency is not impacted at all < 1ms overhead for the framework.  
+ask + Gunicorn + gevent workers combo is able to process around **1300 req/sec per vCPU** provisioned.  
+At this rate the framework overhead is < 1ms.  
 The CPU is the limiting factor. Memory utilization is pretty low < 100MB.  
-If the number of connections is pushed beyond this limit then 100% CPU is consumed, and the latency increases significantly.
+If the number of connections is pushed beyond this limit then 100% CPU is consumed, and latency increases significantly.
 
 The performance seems pretty linear.  
 2x vCPU provides 2x req/sec.  
 2x 1vCPU tasks supports almost the same load as 1x 2vCPU task.
 
 
-Si on augmente la durée du test alors le CPU serveur monte. 
-Stable à 1024 connections. 70% CPU. Aucune augmenation de la latence. Latency = 1.01ms. 
-
-### wrk logs samples
+### Load test samples w/ wrk
 
 1vCPU, 1500 connections, 1 sec sleep, Flask, Gunicorn + gevent workers
 
+```
 Running 1m test @ http://35.183.93.139:8000/sleep/1000
   2 threads and 1500 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
@@ -238,10 +236,12 @@ Running 1m test @ http://35.183.93.139:8000/sleep/1000
   79203 requests in 1.00m, 15.11MB read
 Requests/sec:   1318.29
 Transfer/sec:    257.49KB
+```
 
-1vCPU, 1250 connections, 1 sec sleep, Flask, Gunicorn + gevent workers
+1vCPU, 1250 connections, 1 sec sleep, Flask, Gunicorn + gevent workers  
 CPU: 83%
 
+```
 Running 1m test @ http://35.183.93.139:8000/sleep/1000
   2 threads and 1250 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
@@ -250,10 +250,12 @@ Running 1m test @ http://35.183.93.139:8000/sleep/1000
   73376 requests in 1.00m, 14.00MB read
 Requests/sec:   1221.29
 Transfer/sec:    238.54KB
+```
 
-1vCPU, 1400 connections, 1 sec sleep, Flask, Gunicorn + gevent workers
+1vCPU, 1400 connections, 1 sec sleep, Flask, Gunicorn + gevent workers  
 CPU: 100%
 
+```
 Running 1m test @ http://35.183.93.139:8000/sleep/1000
   2 threads and 1400 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
@@ -262,10 +264,12 @@ Running 1m test @ http://35.183.93.139:8000/sleep/1000
   79111 requests in 1.00m, 15.09MB read
 Requests/sec:   1316.90
 Transfer/sec:    257.21KB
+```
 
-1vCPU, 1350 connections, 1 sec sleep, Flask, Gunicorn + gevent workers
+1vCPU, 1350 connections, 1 sec sleep, Flask, Gunicorn + gevent workers  
 CPU: 94%
 
+```
 wrk --duration 1m --threads 2 --connections 1350 --timeout 10 http://35.183.93.139:8000/sleep/1000
 
 Running 1m test @ http://35.183.93.139:8000/sleep/1000
@@ -276,10 +280,12 @@ Running 1m test @ http://35.183.93.139:8000/sleep/1000
   79102 requests in 1.00m, 15.09MB read
 Requests/sec:   1318.15
 Transfer/sec:    257.45KB
+```
 
-1vCPU, 650 connections, 500 msec sleep, Flask, Gunicorn + gevent workers
+1vCPU, 650 connections, 500 msec sleep, Flask, Gunicorn + gevent workers  
 CPU: 87%
 
+```
 Running 1m test @ http://35.183.93.139:8000/sleep/500
   2 threads and 650 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
@@ -288,10 +294,12 @@ Running 1m test @ http://35.183.93.139:8000/sleep/500
   76953 requests in 1.00m, 14.60MB read
 Requests/sec:   1280.88
 Transfer/sec:    248.92KB
+```
 
-2vCPU, 1350 connections, 1 sec sleep, Flask, Gunicorn + gevent workers
+2vCPU, 1350 connections, 1 sec sleep, Flask, Gunicorn + gevent workers  
 CPU: 48%
 
+```
 Running 1m test @ http://99.79.33.246:8000/sleep/1000
   2 threads and 1350 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
@@ -300,10 +308,12 @@ Running 1m test @ http://99.79.33.246:8000/sleep/1000
   79414 requests in 1.00m, 15.15MB read
 Requests/sec:   1321.45
 Transfer/sec:    258.10KB
+```
 
-2vCPU, 2700 connections, 1 sec sleep, Flask, Gunicorn + gevent workers
+2vCPU, 2700 connections, 1 sec sleep, Flask, Gunicorn + gevent workers  
 CPU: 98%
 
+```
 Running 1m test @ http://99.79.33.246:8000/sleep/1000
   2 threads and 2700 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
@@ -312,11 +322,11 @@ Running 1m test @ http://99.79.33.246:8000/sleep/1000
   154219 requests in 1.00m, 29.42MB read
 Requests/sec:   2570.10
 Transfer/sec:    501.98KB
-
+```
 
 ## Pricing
 
-As of May 2019, at equivalent vCPU and memory, ECS Fargate is 2x more expensive as EC2.
+As of May 2019, at equivalent vCPU and memory, ECS Fargate is **2x more expensive** as EC2.
 
 ### ECS Fargete pricing
 roughly $0.05/hour/vCPUx2GB = $35 / month  
