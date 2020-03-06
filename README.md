@@ -204,7 +204,7 @@ Read https://medium.com/@genchilu/brief-introduction-about-the-types-of-worker-i
 
 If your API is not CPU-bound but I/O bound, the thread is not blocked, it can still process requests while waiting for the I/O access.
 
-Using the **siege** tool (https://github.com/JoeDog/siege) and the **gevent** worker class, we could see the async behaviour of the API calls as describe in the Meidum.com post above.
+Using the **siege** tool (https://github.com/JoeDog/siege) and the **gevent** worker class, we could see the async behaviour of the API calls as describe in the Medium.com post above.
 
 
 ### Meinheld and evenlet worker class
@@ -328,7 +328,7 @@ Transfer/sec:    501.98KB
 
 As of May 2019, at equivalent vCPU and memory, ECS Fargate is **2x more expensive** as EC2.
 
-### ECS Fargete pricing
+### ECS Fargate pricing
 roughly $0.05/hour/vCPUx2GB = $35 / month  
 Lowest setup: 0.25vCPU +  512MB = $0.0136/hour = $9.7 / month
 
