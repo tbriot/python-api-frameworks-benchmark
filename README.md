@@ -1,7 +1,5 @@
 # Python API frameworks tested
 * Flask Restful: https://flask-restful.readthedocs.io/
-* Falcon (todo): https://falconframework.org/
-* ???
 
 # Frameworks popularity
 Flask Restful: 4k GitHub stars.  
