@@ -1,4 +1,4 @@
 Flask-RESTful==0.3.7
 gunicorn==19.9.0
 greenlet==0.4.15
-gevent==1.4.0
+gevent==23.9.1
